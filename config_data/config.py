@@ -19,9 +19,15 @@ class DB:
 
 
 @dataclass
+class NatsConfig:
+    servers: list[str]
+
+
+@dataclass
 class Config:
     bot: tg_bot
     db: DB
+    nats: NatsConfig
 
 
 def load_config(path: str | None = None) -> Config:
@@ -35,5 +41,8 @@ def load_config(path: str | None = None) -> Config:
             ),
         db=DB(
             dns=env('dns')
+        ),
+        nats=NatsConfig(
+            servers=env.list('nats')
         )
     )

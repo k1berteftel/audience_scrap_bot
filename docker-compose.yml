@@ -27,6 +27,17 @@ services:
     depends_on:
       - postgres
 
+  nats:
+    image: nats:latest
+    entrypoint: /nats-server
+    command: "-c /config/server.conf"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - ./nats/data:/data
+      - ./nats/config/server.conf:/config/server.conf
+
 volumes:
   01-simple-alchemy-pgadmin:
   01-simple-alchemy-postgres:
