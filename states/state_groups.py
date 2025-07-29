@@ -5,16 +5,15 @@ from aiogram.fsm.state import State, StatesGroup
 
 class startSG(StatesGroup):
     start = State()
-
-
-class adminSG(StatesGroup):
-    start = State()
+    base_menu = State()
+    get_channel = State()
+    my_channels = State()
     get_mail = State()
-    get_time = State()
-    get_keyboard = State()
-    confirm_mail = State()
-    deeplink_menu = State()
-    deeplink_del = State()
-    admin_menu = State()
-    admin_del = State()
-    admin_add = State()
+    get_user_count = State()
+    confirm_malling = State()
+    accounts = State()
+    add_account = State()
+    del_account = State()
+    kod_send = State()
+    password = State()
+
