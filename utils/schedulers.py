@@ -1,59 +1,53 @@
+import os
 import asyncio
+
 from aiogram import Bot
-from aiogram import Bot
-from aiogram_dialog import DialogManager
-from aiogram.types import InlineKeyboardMarkup, Message
-from datetime import datetime, timedelta
+from aiogram.types import FSInputFile
+from pyrogram import Client
+from pyrogram.errors import FloodWait, PeerFlood
+from pyrogram.enums import ParseMode
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from database.action_data_class import DataInteraction
+
+from utils.tables import get_table
+from utils.collect_funcs import collect_users_base
 
 
-async def send_messages(bot: Bot, session: DataInteraction, keyboard: InlineKeyboardMarkup|None, message: Message, **kwargs):
-    users = await session.get_users()
-    text = kwargs.get('text')
-    caption = kwargs.get('caption')
-    photo = kwargs.get('photo')
-    video = kwargs.get('video')
-    if text:
-        for user in users:
+async def send_message(user_id: int, bot: Bot, users: list[list], text: str, scheduler: AsyncIOScheduler, **kwargs):
+    job = scheduler.get_job(job_id=f'{user_id}_malling')
+    if job:
+        job.remove()
+    count = kwargs.get('count')
+    counter = 0
+    try:
+        app = Client(str(user_id))
+    except Exception as err:
+        print(err)
+        return False
+    async with app:
+        for user in (users if not count else users[:count:]):
             try:
-                await bot.send_message(
-                    chat_id=user.user_id,
-                    text=text.format(name=user.name),
-                    reply_markup=keyboard
+                await app.send_message(
+                    chat_id=user[1],
+                    text=text,
+                    parse_mode=ParseMode.HTML
                 )
-                if user.active == 0:
-                    await session.set_active(user.user_id, 1)
+                counter += 1
+            except FloodWait:
+                await asyncio.sleep(10)
+            except PeerFlood:
+                await asyncio.sleep(60)
+                try:
+                    await app.send_message(
+                        chat_id=user[1],
+                        text=text,
+                        parse_mode=ParseMode.HTML
+                    )
+                except PeerFlood:
+                    await asyncio.sleep(60 * 30)
             except Exception as err:
                 print(err)
-                await session.set_active(user.user_id, 0)
-    elif caption:
-        if photo:
-            for user in users:
-                try:
-                    await bot.send_photo(
-                        chat_id=user.user_id,
-                        photo=photo,
-                        caption=caption.format(name=user.name),
-                        reply_markup=keyboard
-                    )
-                    if user.active == 0:
-                        await session.set_active(user.user_id, 1)
-                except Exception as err:
-                    print(err)
-                    await session.set_active(user.user_id, 0)
-        else:
-            for user in users:
-                try:
-                    await bot.send_video(
-                        chat_id=user.user_id,
-                        video=video,
-                        caption=caption.format(name=user.name),
-                        reply_markup=keyboard
-                    )
-                    if user.active == 0:
-                        await session.set_active(user.user_id, 1)
-                except Exception as err:
-                    print(err)
-                    await session.set_active(user.user_id, 0)
-
+            await asyncio.sleep(30)
+    await bot.send_message(
+        chat_id=user_id,
+        text=f'Рассылка сообщения прошла успешно, {counter} пользователей получили сообщение'
+    )
