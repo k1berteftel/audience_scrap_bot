@@ -10,24 +10,28 @@ from environs import Env
 @dataclass
 class tg_bot:
     token: str
-    admin_ids: list[int]
 
 
 @dataclass
-class DB:
-    dns: str
+class UserBot:
+    api_id: int
+    api_hash: str
 
 
 @dataclass
-class NatsConfig:
-    servers: list[str]
+class Proxy:
+    scheme: str
+    hostname: str
+    port: int
+    username: str
+    password: str
 
 
 @dataclass
 class Config:
     bot: tg_bot
-    db: DB
-    nats: NatsConfig
+    user_bot: UserBot
+    proxy: Proxy
 
 
 def load_config(path: str | None = None) -> Config:
@@ -36,13 +40,17 @@ def load_config(path: str | None = None) -> Config:
 
     return Config(
         bot=tg_bot(
-            token=env('token'),
-            admin_ids=list(map(int, env.list('admins')))
+            token=env('token')
             ),
-        db=DB(
-            dns=env('dns')
+        user_bot=UserBot(
+            api_id=int(env('api_id')),
+            api_hash=env('api_hash')
         ),
-        nats=NatsConfig(
-            servers=env.list('nats')
+        proxy=Proxy(
+            scheme=env('proxy_scheme'),
+            hostname=env('proxy_hostname'),
+            port=int(env('proxy_port')),
+            username=env('proxy_username'),
+            password=env('proxy_password')
         )
     )
