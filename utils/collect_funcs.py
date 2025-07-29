@@ -1,24 +1,35 @@
+from aiogram import Bot
 from pyrogram import Client
 
 from database.db_conf import database
+from config_data.config import Config, load_config
+
+
+config: Config = load_config()
+
+proxy_data = config.proxy
 
 
 proxy = {
-    'scheme': 'http',
-    'hostname': '109.205.62.47',
-    'port': 64856,
-    'username': 'eAzEJHXk',
-    'password': '6WL4egih'
+    'scheme': proxy_data.scheme,
+    'hostname': proxy_data.hostname,
+    'port': proxy_data.port,
+    'username': proxy_data.username,
+    'password': proxy_data.password
 }
 
 
-async def collect_users_base(account: str, channel: str | int, users: list[list] | None = None) -> list[list] | bool:
+async def collect_users_base(user_id: int, channel: str | int, bot: Bot, users: list[list] | None = None) -> list[list] | bool:
     if users is None:
         users = []
     try:
-        app = Client(account, proxy=proxy)
+        app = Client(str(user_id))
     except Exception as err:
         print(err)
+        await bot.send_message(
+            chat_id=user_id,
+            text='Ошибка авторизации в аккаунт пожалуйста попробуйте снова'
+        )
         return False
     async with app:
         new_users = []

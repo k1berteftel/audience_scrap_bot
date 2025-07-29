@@ -143,7 +143,11 @@ async def get_channel(msg: Message, widget: ManagedTextInput, dialog_manager: Di
         return
     message = await msg.answer('Начался процесс сбора базы')
     users = dialog_manager.dialog_data.get('users')
-    users = await collect_users_base(str(msg.from_user.id), text, users)
+    users = await collect_users_base(msg.from_user.id, text, msg.bot, users)
+    if not users:
+        await msg.answer('При сборе базы произошла какая-то ошибка пожалуйста попробуйте снова')
+        await dialog_manager.switch_to(startSG.base_menu)
+        return
     random.shuffle(users)
     dialog_manager.dialog_data['users'] = users
     await message.delete()
@@ -197,7 +201,11 @@ async def my_channels_pager(clb: CallbackQuery, widget: Button, dialog_manager: 
 async def my_chat_selector(clb: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str):
     await clb.answer('Начался процесс считывания базы пользователей')
     users = dialog_manager.dialog_data.get('users')
-    users = await collect_users_base(str(clb.from_user.id), int(item_id), users)
+    users = await collect_users_base(clb.from_user.id, int(item_id), clb.bot, users)
+    if not users:
+        await clb.message.answer('При сборе базы произошла какая-то ошибка пожалуйста попробуйте снова')
+        await dialog_manager.switch_to(startSG.base_menu)
+        return
     random.shuffle(users)
     dialog_manager.dialog_data['users'] = users
     await dialog_manager.switch_to(startSG.base_menu)
@@ -213,7 +221,11 @@ async def get_forward_message(msg: Message, widget: MessageInput, dialog_manager
         return
     bot: Bot = dialog_manager.middleware_data.get('bot')
     users = dialog_manager.dialog_data.get('users')
-    users = await collect_users_base(str(msg.from_user.id), msg.forward_from_chat.id, users)
+    users = await collect_users_base(msg.from_user.id, msg.forward_from_chat.id, msg.bot, users)
+    if not users:
+        await msg.answer('При сборе базы произошла какая-то ошибка пожалуйста попробуйте снова')
+        await dialog_manager.switch_to(startSG.base_menu)
+        return
     random.shuffle(users)
     dialog_manager.dialog_data['users'] = users
     await dialog_manager.switch_to(startSG.base_menu)
